@@ -7,7 +7,18 @@ layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_c326s")
 
-[node name="Button" type="Button" parent="."]
+[node name="Button1" type="Button" parent="."]
 layout_mode = 0
 offset_right = 8.0
 offset_bottom = 8.0
+text = "Button1"
+
+[node name="Button2" type="Button" parent="."]
+layout_mode = 0
+offset_top = 40.0
+offset_right = 71.0
+offset_bottom = 71.0
+text = "Button2"
+
+[connection signal="focus_entered" from="Button1" to="." method="_on_button_1_focus_entered"]
+[connection signal="focus_entered" from="Button2" to="." method="_on_button_2_focus_entered"]
