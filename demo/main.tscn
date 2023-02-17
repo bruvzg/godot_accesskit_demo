@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://dmx2xuigcpvt4"]
+
+[ext_resource type="Script" path="res://main.gd" id="1_c326s"]
+
+[node name="Node" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_c326s")
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0

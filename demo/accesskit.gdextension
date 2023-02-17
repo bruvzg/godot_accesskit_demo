@@ -1,0 +1,7 @@
+[configuration]
+
+entry_symbol = "accesskit_library_init"
+
+[libraries]
+
+windows.debug.x86_64 = "res://bin/libgdaccesskit.windows.template_debug.x86_64.dll"
