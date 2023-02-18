@@ -6,6 +6,8 @@
 #include <godot_cpp/classes/display_server_extension.hpp>
 #include <godot_cpp/classes/display_server_extension_manager.hpp>
 
+#include <godot_cpp/templates/hash_set.hpp>
+
 #include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
@@ -13,13 +15,15 @@ using namespace godot;
 typedef void (*AccessKitAction)(void *, const char *);
 
 // Functions exported by AccessKit library.
-extern "C" void accesskit_init(void *p_dse, int64_t p_native_window_handle, AccessKitAction p_action, const char *p_update);
+extern "C" bool accesskit_init(void *p_dse, int64_t p_native_window_handle, AccessKitAction p_action, const char *p_update);
 extern "C" void accesskit_destroy(void *p_dse, int64_t p_native_window_handle);
 extern "C" void accesskit_push_update(void *p_dse, int64_t p_native_window_handle, const char *p_update);
 
 // DisplayServer extension.
 class AccessKitDSE : public DisplayServerExtension {
 	GDCLASS(AccessKitDSE, DisplayServerExtension);
+
+	HashSet<int64_t> window_ids;
 
 protected:
 	static void _bind_methods() {
@@ -31,8 +35,9 @@ protected:
 public:
 	// Callback function for AccessKit library.
 	static void accesskit_action(void *p_dse, const char *p_name) {
-		UtilityFunctions::print("[!] callback");
-		((AccessKitDSE *)p_dse)->emit_signal("action_signal", String::utf8(p_name));
+		String name = String::utf8(p_name);
+		UtilityFunctions::print("[!] callback ", name);
+		((AccessKitDSE *)p_dse)->emit_signal("action_signal", name);
 	}
 
 	virtual String _get_name() const override {
@@ -40,19 +45,36 @@ public:
 	}
 
 	virtual void _create_window(int32_t p_window_id, int64_t p_native_window_handle) override {
-		UtilityFunctions::print("[!] creare window");
-		accesskit_init(this, p_native_window_handle, accesskit_action, "{\"nodes\":[{\"id\":1,\"role\":\"window\",\"name\":\"Hello from Godot\"}],\"focus\":1,\"tree\":{\"root\":1}}");
+		UtilityFunctions::print("[!] creare window ", p_window_id);
+		bool ok = accesskit_init(this, p_native_window_handle, accesskit_action, R"JSON({
+				"nodes":[
+					[1, {"role":"window","name":"Hello from Godot"}]
+				],
+				"focus":1,
+				"tree":{"root":1}
+			}
+		)JSON");
+		if (ok) {
+			window_ids.insert(p_window_id);
+		} else {
+			UtilityFunctions::print("[!] creare window failed ", p_window_id);
+		}
 	}
 
 	virtual void _destroy_window(int32_t p_window_id, int64_t p_native_window_handle) override {
-		UtilityFunctions::print("[!] destroy window");
-		accesskit_destroy(this, p_native_window_handle);
+		UtilityFunctions::print("[!] destroy window ", p_window_id);
+		if (window_ids.has(p_window_id)) {
+			accesskit_destroy(this, p_native_window_handle);
+			window_ids.erase(p_window_id);
+		}
 	}
 
 	void update_tree(int32_t p_window_id, const String &p_update) {
-		UtilityFunctions::print("[!] update");
-		int64_t native_window_handle = DisplayServer::get_singleton()->window_get_native_handle(DisplayServer::WINDOW_HANDLE, p_window_id);
-		accesskit_push_update(this, native_window_handle, p_update.utf8().get_data());
+		UtilityFunctions::print("[!] update ", p_window_id, " ", p_update);
+		if (window_ids.has(p_window_id)) {
+			int64_t native_window_handle = DisplayServer::get_singleton()->window_get_native_handle(DisplayServer::WINDOW_HANDLE, p_window_id);
+			accesskit_push_update(this, native_window_handle, p_update.utf8().get_data());
+		}
 	}
 
 	AccessKitDSE() {

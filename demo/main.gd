@@ -4,10 +4,11 @@ func _ready():
 	var iface = DisplayServerExtensionManager.find_interface("AccessKit")
 	iface.update_tree(DisplayServer.MAIN_WINDOW_ID, """{
 			\"nodes\":[
-				{\"id\":1,\"role\":\"window\",\"name\":\"Hello from Godot\",\"children\":[2,3]},
-				{\"id\":2,\"role\":\"button\",\"name\":\"Button A\"},
-				{\"id\":3,\"role\":\"button\",\"name\":\"Button B\"}
-			],\"focus\":2
+				[1, {\"role\":\"window\",\"name\":\"Hello from Godot\",\"children\":[2,3]}],
+				[2, {\"role\":\"button\",\"name\":\"Button A\"}],
+				[3, {\"role\":\"button\",\"name\":\"Button B\"}]
+			],
+			\"focus\":2
 		}""")
 	$Button1.grab_focus()
 

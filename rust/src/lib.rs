@@ -3,17 +3,19 @@
 // the LICENSE-APACHE file).
 
 use accesskit::{ActionHandler, ActionRequest, TreeUpdate};
+use accesskit_windows::SubclassingAdapter;
 use std::{
     ffi::{CStr, CString},
     os::raw::c_char,
     os::raw::c_void
 };
-use windows::Win32::{
-    Foundation::*,
-    UI::WindowsAndMessaging::*
+use windows::{
+    core::*,
+    Win32::{
+        Foundation::*,
+        UI::WindowsAndMessaging::*
+    },
 };
-
-mod platform_impl;
 
 type ActionHandlerCallback = extern "C" fn(*mut c_void, *const c_char);
 
@@ -37,7 +39,7 @@ impl ActionHandler for GDActionHandler {
 }
 
 pub struct Adapter {
-    adapter: platform_impl::Adapter,
+    adapter: SubclassingAdapter,
 }
 
 impl Adapter {
@@ -51,16 +53,13 @@ impl Adapter {
             callback: action_handler,
             dse: dse_ptr,
         };
-        let adapter = platform_impl::Adapter::new(hwnd, source, Box::new(action_handler));
+        let adapter = SubclassingAdapter::new(hwnd, source, Box::new(action_handler));
         Self { adapter }
     }
 
     pub fn update(&self, update: TreeUpdate) {
-        self.adapter.update(update)
-    }
-
-    pub fn update_if_active(&self, updater: impl FnOnce() -> TreeUpdate) {
-        self.adapter.update_if_active(updater)
+        let events = self.adapter.update(update);
+        events.raise();
     }
 }
 
@@ -69,7 +68,7 @@ fn tree_update_from_json(json: *const c_char) -> Option<TreeUpdate> {
     serde_json::from_str::<TreeUpdate>(json).ok()
 }
 
-const PROP_NAME: &str = "AccessKitGodotPlugin";
+const PROP_NAME: &HSTRING = w!("AccessKitGodotPlugin");
 
 #[no_mangle]
 extern fn accesskit_init(
@@ -78,14 +77,14 @@ extern fn accesskit_init(
     action_handler: ActionHandlerCallback,
     initial_tree_update: *const c_char
 ) -> bool {
-    let initial_tree_update = match tree_update_from_json(initial_tree_update) {
+    let tree_update = match tree_update_from_json(initial_tree_update) {
         Some(tree_update) => tree_update,
         _ => return false
     };
     let adapter = Box::new(Adapter::new(
         dse,
         hwnd,
-        Box::new(move || initial_tree_update),
+        Box::new(move || tree_update),
         action_handler,
     ));
     let ptr = Box::into_raw(adapter);
