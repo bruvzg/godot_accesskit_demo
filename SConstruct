@@ -15,8 +15,11 @@ env = SConscript("../godot-cpp/SConstruct")
 # tweak this if you want to use different folders, or more folders, to store your source code in.
 env.Append(CPPPATH=["src/"])
 env.Append(LIBPATH=["./rust/target/debug"])
-env.Append(LIBS=["accesskit_godot_plugin", "Ws2_32", "Ole32", "OleAut32", "Uiautomationcore", "Advapi32", "User32", "Bcrypt", "Userenv"])
+env.Append(LIBS=["accesskit_godot_plugin"])
 sources = Glob("src/*.cpp")
+
+if env["platform"] == "windows":
+    env.Append(LIBS=["Ws2_32", "Ole32", "OleAut32", "Uiautomationcore", "Advapi32", "User32", "Bcrypt", "Userenv"])
 
 library = env.SharedLibrary("demo/bin/libgdaccesskit{}{}".format(env["suffix"], env["SHLIBSUFFIX"]), source=sources)
 

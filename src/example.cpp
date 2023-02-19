@@ -1,12 +1,12 @@
-#include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/binder_common.hpp>
+#include <godot_cpp/core/class_db.hpp>
 
-#include <godot_cpp/classes/global_constants.hpp>
 #include <godot_cpp/classes/display_server.hpp>
 #include <godot_cpp/classes/display_server_extension.hpp>
 #include <godot_cpp/classes/display_server_extension_manager.hpp>
+#include <godot_cpp/classes/global_constants.hpp>
 
-#include <godot_cpp/templates/hash_set.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -15,15 +15,30 @@ using namespace godot;
 typedef void (*AccessKitAction)(void *, const char *);
 
 // Functions exported by AccessKit library.
-extern "C" bool accesskit_init(void *p_dse, int64_t p_native_window_handle, AccessKitAction p_action, const char *p_update);
-extern "C" void accesskit_destroy(void *p_dse, int64_t p_native_window_handle);
-extern "C" void accesskit_push_update(void *p_dse, int64_t p_native_window_handle, const char *p_update);
+extern "C" void *accesskit_init(void *p_dse, int64_t p_native_display_handle, int64_t p_native_window_handle, int64_t p_native_view_handle, AccessKitAction p_action, const char *p_update, const char *p_app_name);
+extern "C" void accesskit_destroy(void *p_dse, void *p_adapter);
+extern "C" bool accesskit_push_update(void *p_dse, void *p_adapter, const char *p_update);
 
 // DisplayServer extension.
 class AccessKitDSE : public DisplayServerExtension {
 	GDCLASS(AccessKitDSE, DisplayServerExtension);
 
-	HashSet<int64_t> window_ids;
+	struct AdapterData {
+		int64_t display_handle = 0;
+		int64_t window_handle = 0;
+		int64_t view_handle = 0;
+		void *adapter = nullptr;
+
+		AdapterData() {}
+		AdapterData(int64_t p_native_display_handle, int64_t p_window_handle, int64_t p_view_handle, void *p_adapter) {
+			display_handle = p_native_display_handle;
+			window_handle = p_window_handle;
+			view_handle = p_view_handle;
+			adapter = p_adapter;
+		}
+	};
+
+	HashMap<int32_t, AdapterData> window_adapters;
 
 protected:
 	static void _bind_methods() {
@@ -44,44 +59,56 @@ public:
 		return String("AccessKit");
 	}
 
-	virtual void _create_window(int32_t p_window_id, int64_t p_native_window_handle) override {
+	virtual void _create_window(int32_t p_window_id, int64_t p_native_display_handle, int64_t p_native_window_handle, int64_t p_native_view_handle) override {
 		UtilityFunctions::print("[!] creare window ", p_window_id);
-		bool ok = accesskit_init(this, p_native_window_handle, accesskit_action, R"JSON({
+
+		void *adapter = accesskit_init(this, p_native_display_handle, p_native_window_handle, p_native_view_handle, accesskit_action, R"JSON({
 				"nodes":[
 					[1, {"role":"window","name":"Hello from Godot"}]
 				],
 				"focus":1,
 				"tree":{"root":1}
 			}
-		)JSON");
-		if (ok) {
-			window_ids.insert(p_window_id);
+		)JSON",
+				"Godot");
+
+		if (adapter) {
+			window_adapters[p_window_id] = AdapterData(p_native_display_handle, p_native_window_handle, p_native_view_handle, adapter);
 		} else {
 			UtilityFunctions::print("[!] creare window failed ", p_window_id);
 		}
 	}
 
-	virtual void _destroy_window(int32_t p_window_id, int64_t p_native_window_handle) override {
+	virtual void _destroy_window(int32_t p_window_id, int64_t p_native_display_handle, int64_t p_native_window_handle, int64_t p_native_view_handle) override {
 		UtilityFunctions::print("[!] destroy window ", p_window_id);
-		if (window_ids.has(p_window_id)) {
-			accesskit_destroy(this, p_native_window_handle);
-			window_ids.erase(p_window_id);
+		if (window_adapters.has(p_window_id)) {
+			ERR_FAIL_COND(window_adapters[p_window_id].display_handle != p_native_display_handle);
+			ERR_FAIL_COND(window_adapters[p_window_id].window_handle != p_native_window_handle);
+			ERR_FAIL_COND(window_adapters[p_window_id].view_handle != p_native_view_handle);
+
+			accesskit_destroy(this, window_adapters[p_window_id].adapter);
+			window_adapters.erase(p_window_id);
 		}
 	}
 
-	void update_tree(int32_t p_window_id, const String &p_update) {
+	bool update_tree(int32_t p_window_id, const String &p_update) {
 		UtilityFunctions::print("[!] update ", p_window_id, " ", p_update);
-		if (window_ids.has(p_window_id)) {
-			int64_t native_window_handle = DisplayServer::get_singleton()->window_get_native_handle(DisplayServer::WINDOW_HANDLE, p_window_id);
-			accesskit_push_update(this, native_window_handle, p_update.utf8().get_data());
+		if (window_adapters.has(p_window_id)) {
+			return accesskit_push_update(this, window_adapters[p_window_id].adapter, p_update.utf8().get_data());
+		} else {
+			return false;
 		}
 	}
 
 	AccessKitDSE() {
 		UtilityFunctions::print("[!] dse init");
 	}
+
 	~AccessKitDSE() {
 		UtilityFunctions::print("[!] dse uninit");
+		for (const KeyValue<int32_t, AdapterData> &E : window_adapters) {
+			accesskit_destroy(this, E.value.adapter);
+		}
 	}
 };
 

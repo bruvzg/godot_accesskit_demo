@@ -5,3 +5,4 @@ entry_symbol = "accesskit_library_init"
 [libraries]
 
 windows.debug.x86_64 = "res://bin/libgdaccesskit.windows.template_debug.x86_64.dll"
+macos.debug.arm64 = "res://bin/libgdaccesskit.macos.template_debug.arm64.dylib"

@@ -1,21 +1,37 @@
-// Copyright 2022 The AccessKit Authors. All rights reserved.
-// Licensed under the Apache License, Version 2.0 (found in
-// the LICENSE-APACHE file).
-
 use accesskit::{ActionHandler, ActionRequest, TreeUpdate};
-use accesskit_windows::SubclassingAdapter;
+#[cfg(any(target_os = "macos"))]
+use accesskit_macos::SubclassingAdapter;
+#[cfg(any(target_os = "linux"))]
+use accesskit_unix::Adapter;
+#[cfg(any(target_os = "windows"))]
+use accesskit_windows::{SubclassingAdapter, HWND};
 use std::{
     ffi::{CStr, CString},
     os::raw::c_char,
-    os::raw::c_void
+    os::raw::c_void,
+    ptr,
 };
-use windows::{
-    core::*,
-    Win32::{
-        Foundation::*,
-        UI::WindowsAndMessaging::*
-    },
-};
+
+#[cfg(any(target_os = "windows"))]
+type DisplayHandle = *mut c_void;
+#[cfg(any(target_os = "macos"))]
+type DisplayHandle = *mut c_void;
+#[cfg(any(target_os = "linux"))]
+type DisplayHandle = *mut c_void;
+
+#[cfg(any(target_os = "windows"))]
+type WindowHandle = HWND;
+#[cfg(any(target_os = "macos"))]
+type WindowHandle = *mut c_void;
+#[cfg(any(target_os = "linux"))]
+type WindowHandle = *mut c_void;
+
+#[cfg(any(target_os = "windows"))]
+type ViewHandle = *mut c_void;
+#[cfg(any(target_os = "macos"))]
+type ViewHandle = *mut c_void;
+#[cfg(any(target_os = "linux"))]
+type ViewHandle = *mut c_void;
 
 type ActionHandlerCallback = extern "C" fn(*mut c_void, *const c_char);
 
@@ -38,6 +54,11 @@ impl ActionHandler for GDActionHandler {
     }
 }
 
+fn tree_update_from_json(json: *const c_char) -> Option<TreeUpdate> {
+    let json = unsafe { CStr::from_ptr(json).to_str() }.ok()?;
+    serde_json::from_str::<TreeUpdate>(json).ok()
+}
+
 pub struct Adapter {
     adapter: SubclassingAdapter,
 }
@@ -45,15 +66,25 @@ pub struct Adapter {
 impl Adapter {
     pub fn new(
         dse_ptr: *mut c_void,
-        hwnd: HWND,
+        #[allow(unused_variables)] disp_handle: DisplayHandle,
+        #[allow(unused_variables)] wnd_handle: WindowHandle,
+        #[allow(unused_variables)] view_handle: ViewHandle,
         source: Box<dyn FnOnce() -> TreeUpdate + Send>,
         action_handler: ActionHandlerCallback,
+        #[allow(unused_variables)] app_name: String,
     ) -> Self {
         let action_handler = GDActionHandler {
             callback: action_handler,
             dse: dse_ptr,
         };
-        let adapter = SubclassingAdapter::new(hwnd, source, Box::new(action_handler));
+        #[cfg(target_os = "macos")]
+        let adapter =
+            unsafe { SubclassingAdapter::new(view_handle, source, Box::new(action_handler)) };
+        #[cfg(target_os = "windows")]
+        let adapter = SubclassingAdapter::new(wnd_handle, source, Box::new(action_handler));
+        #[cfg(target_os = "linux")]
+        let adapter =
+            unsafe { Adapter::new(app_name, "Godot", "4.0", source, Box::new(action_handler)) };
         Self { adapter }
     }
 
@@ -63,53 +94,50 @@ impl Adapter {
     }
 }
 
-fn tree_update_from_json(json: *const c_char) -> Option<TreeUpdate> {
-    let json = unsafe { CStr::from_ptr(json).to_str() }.ok()?;
-    serde_json::from_str::<TreeUpdate>(json).ok()
-}
-
-const PROP_NAME: &HSTRING = w!("AccessKitGodotPlugin");
-
 #[no_mangle]
-extern fn accesskit_init(
+extern "C" fn accesskit_init(
     dse: *mut c_void,
-    hwnd: HWND,
+    disp_handle: DisplayHandle,
+    wnd_handle: WindowHandle,
+    view_handle: ViewHandle,
     action_handler: ActionHandlerCallback,
-    initial_tree_update: *const c_char
-) -> bool {
+    initial_tree_update: *const c_char,
+    app_name: *const c_char,
+) -> *mut c_void {
     let tree_update = match tree_update_from_json(initial_tree_update) {
         Some(tree_update) => tree_update,
-        _ => return false
+        _ => return ptr::null_mut(),
     };
+    let app_name = unsafe { CStr::from_ptr(app_name).to_str() }.unwrap();
     let adapter = Box::new(Adapter::new(
         dse,
-        hwnd,
+        disp_handle,
+        wnd_handle,
+        view_handle,
         Box::new(move || tree_update),
         action_handler,
+        app_name.to_string(),
     ));
-    let ptr = Box::into_raw(adapter);
-    if unsafe { SetPropW(hwnd, PROP_NAME, HANDLE(ptr as _)).as_bool() } {
-        true
-    } else {
-        false
-    }
+    Box::into_raw(adapter) as *mut c_void
 }
 
 #[no_mangle]
-extern fn accesskit_push_update(_dse: *mut c_void, hwnd: HWND, tree_update: *const c_char) -> bool {
+extern "C" fn accesskit_push_update(
+    _dse: *mut c_void,
+    adapter_ptr: *mut c_void,
+    tree_update: *const c_char,
+) -> bool {
     let tree_update = match tree_update_from_json(tree_update) {
         Some(tree_update) => tree_update,
-        _ => return false
+        _ => return false,
     };
-    let handle = unsafe { GetPropW(hwnd, PROP_NAME) };
-    let adapter = unsafe { Box::from_raw(handle.0 as *mut Adapter) };
+    let adapter = unsafe { Box::from_raw(adapter_ptr as *mut Adapter) };
     adapter.update(tree_update);
     Box::into_raw(adapter);
     true
 }
 
 #[no_mangle]
-extern fn accesskit_destroy(_dse: *mut c_void, hwnd: HWND) {
-    let handle = unsafe { RemovePropW(hwnd, PROP_NAME) }.unwrap();
-    unsafe { Box::from_raw(handle.0 as *mut Adapter) };
+extern "C" fn accesskit_destroy(_dse: *mut c_void, adapter_ptr: *mut c_void) {
+    unsafe { Box::from_raw(adapter_ptr as *mut Adapter) };
 }
