@@ -44,15 +44,15 @@ protected:
 	static void _bind_methods() {
 		ClassDB::bind_method(D_METHOD("update_tree", "id", "update"), &AccessKitDSE::update_tree);
 
-		ADD_SIGNAL(MethodInfo("action_signal", PropertyInfo(Variant::STRING, "name")));
+		ADD_SIGNAL(MethodInfo("action_signal", PropertyInfo(Variant::STRING, "json_data")));
 	}
 
 public:
 	// Callback function for AccessKit library.
-	static void accesskit_action(void *p_dse, const char *p_name) {
-		String name = String::utf8(p_name);
-		UtilityFunctions::print("[!] callback ", name);
-		((AccessKitDSE *)p_dse)->emit_signal("action_signal", name);
+	static void accesskit_action(void *p_dse, const char *p_json_data) {
+		String json_data = String::utf8(p_json_data);
+		UtilityFunctions::print("[!] callback ", json_data);
+		((AccessKitDSE *)p_dse)->emit_signal("action_signal", json_data);
 	}
 
 	virtual String _get_name() const override {

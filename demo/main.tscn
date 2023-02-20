@@ -5,6 +5,10 @@
 [node name="Node" type="Control"]
 layout_mode = 3
 anchors_preset = 0
+offset_left = 216.0
+offset_top = 182.0
+offset_right = 216.0
+offset_bottom = 182.0
 script = ExtResource("1_c326s")
 
 [node name="Button1" type="Button" parent="."]
@@ -20,5 +24,15 @@ offset_right = 71.0
 offset_bottom = 71.0
 text = "Button2"
 
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = -64.0
+offset_top = -73.0
+offset_right = 265.0
+offset_bottom = -41.0
+text = "Test text."
+
 [connection signal="focus_entered" from="Button1" to="." method="_on_button_1_focus_entered"]
+[connection signal="pressed" from="Button1" to="." method="_on_button_1_pressed"]
 [connection signal="focus_entered" from="Button2" to="." method="_on_button_2_focus_entered"]
+[connection signal="pressed" from="Button2" to="." method="_on_button_2_pressed"]
