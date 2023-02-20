@@ -15,7 +15,7 @@ using namespace godot;
 typedef void (*AccessKitAction)(void *, const char *);
 
 // Functions exported by AccessKit library.
-extern "C" void *accesskit_init(void *p_dse, int64_t p_native_display_handle, int64_t p_native_window_handle, int64_t p_native_view_handle, AccessKitAction p_action, const char *p_update, const char *p_app_name);
+extern "C" void *accesskit_init(void *p_dse, void *p_native_display_handle, void *p_native_window_handle, void *p_native_view_handle, AccessKitAction p_action, const char *p_update, const char *p_app_name);
 extern "C" void accesskit_destroy(void *p_dse, void *p_adapter);
 extern "C" bool accesskit_push_update(void *p_dse, void *p_adapter, const char *p_update);
 
@@ -62,7 +62,7 @@ public:
 	virtual void _create_window(int32_t p_window_id, int64_t p_native_display_handle, int64_t p_native_window_handle, int64_t p_native_view_handle) override {
 		UtilityFunctions::print("[!] creare window ", p_window_id);
 
-		void *adapter = accesskit_init(this, p_native_display_handle, p_native_window_handle, p_native_view_handle, accesskit_action, R"JSON({
+		void *adapter = accesskit_init(this, (void *)p_native_display_handle, (void *)p_native_window_handle, (void *)p_native_view_handle, accesskit_action, R"JSON({
 				"nodes":[
 					[1, {"role":"window","name":"Hello from Godot"}]
 				],

@@ -4,5 +4,23 @@ entry_symbol = "accesskit_library_init"
 
 [libraries]
 
+windows.debug.x86_32 = "res://bin/libgdaccesskit.windows.template_debug.x86_32.dll"
+windows.release.x86_32 = "res://bin/libgdaccesskit.windows.template_release.x86_32.dll"
 windows.debug.x86_64 = "res://bin/libgdaccesskit.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "res://bin/libgdaccesskit.windows.template_release.x86_64.dll"
+windows.debug.arm64 = "res://bin/libgdaccesskit.windows.template_debug.arm64.dll"
+windows.release.arm64 = "res://bin/libgdaccesskit.windows.template_release.arm64.dll"
+
+macos.debug.x86_64 = "res://bin/libgdaccesskit.macos.template_debug.x86_64.dylib"
+macos.release.x86_64 = "res://bin/libgdaccesskit.macos.template_release.x86_64.dylib"
 macos.debug.arm64 = "res://bin/libgdaccesskit.macos.template_debug.arm64.dylib"
+macos.release.arm64 = "res://bin/libgdaccesskit.macos.template_release.arm64.dylib"
+
+linux.debug.x86.32 = "res://bin/libgdaccesskit.linux.template_debug.x86_32.so"
+linux.release.x86.32 = "res://bin/libgdaccesskit.linux.template_release.x86_32.so"
+linux.debug.x86_64 = "res://bin/libgdaccesskit.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "res://bin/libgdaccesskit.linux.template_release.x86_64.so"
+linux.debug.arm64 = "res://bin/libgdaccesskit.linux.template_debug.arm64.so"
+linux.release.arm64 = "res://bin/libgdaccesskit.linux.template_release.arm64.so"
+linux.debug.rv64 = "res://bin/libgdaccesskit.linux.template_debug.rv64.so"
+linux.release.rv64 = "res://bin/libgdaccesskit.linux.template_release.rv64.so"

@@ -2,7 +2,7 @@ use accesskit::{ActionHandler, ActionRequest, TreeUpdate};
 #[cfg(any(target_os = "macos"))]
 use accesskit_macos::SubclassingAdapter;
 #[cfg(any(target_os = "linux"))]
-use accesskit_unix::Adapter;
+use accesskit_unix::Adapter as SubclassingAdapter;
 #[cfg(any(target_os = "windows"))]
 use accesskit_windows::{SubclassingAdapter, HWND};
 use std::{
@@ -13,9 +13,9 @@ use std::{
 };
 
 #[cfg(any(target_os = "windows"))]
-type DisplayHandle = *mut c_void;
+type DisplayHandle = *mut c_void; // Unused, always nullptr.
 #[cfg(any(target_os = "macos"))]
-type DisplayHandle = *mut c_void;
+type DisplayHandle = *mut c_void; // Unused, always nullptr.
 #[cfg(any(target_os = "linux"))]
 type DisplayHandle = *mut c_void;
 
@@ -26,11 +26,11 @@ type WindowHandle = *mut c_void;
 #[cfg(any(target_os = "linux"))]
 type WindowHandle = *mut c_void;
 
-#[cfg(any(target_os = "windows"))]
+#[cfg(any(target_os = "windows"))] // Unused, always nullptr.
 type ViewHandle = *mut c_void;
 #[cfg(any(target_os = "macos"))]
 type ViewHandle = *mut c_void;
-#[cfg(any(target_os = "linux"))]
+#[cfg(any(target_os = "linux"))] // Unused, always nullptr.
 type ViewHandle = *mut c_void;
 
 type ActionHandlerCallback = extern "C" fn(*mut c_void, *const c_char);
@@ -59,11 +59,11 @@ fn tree_update_from_json(json: *const c_char) -> Option<TreeUpdate> {
     serde_json::from_str::<TreeUpdate>(json).ok()
 }
 
-pub struct Adapter {
+pub struct GDAdapter {
     adapter: SubclassingAdapter,
 }
 
-impl Adapter {
+impl GDAdapter {
     pub fn new(
         dse_ptr: *mut c_void,
         #[allow(unused_variables)] disp_handle: DisplayHandle,
@@ -84,13 +84,16 @@ impl Adapter {
         let adapter = SubclassingAdapter::new(wnd_handle, source, Box::new(action_handler));
         #[cfg(target_os = "linux")]
         let adapter =
-            unsafe { Adapter::new(app_name, "Godot", "4.0", source, Box::new(action_handler)) };
+            SubclassingAdapter::new(app_name, "Godot".to_string(), "4.0".to_string(), source, Box::new(action_handler)).unwrap();
         Self { adapter }
     }
 
     pub fn update(&self, update: TreeUpdate) {
-        let events = self.adapter.update(update);
-        events.raise();
+        #[cfg(not(target_os = "linux"))]
+        self.adapter.update(update).raise();
+
+        #[cfg(target_os = "linux")]
+        self.adapter.update(update);
     }
 }
 
@@ -109,7 +112,7 @@ extern "C" fn accesskit_init(
         _ => return ptr::null_mut(),
     };
     let app_name = unsafe { CStr::from_ptr(app_name).to_str() }.unwrap();
-    let adapter = Box::new(Adapter::new(
+    let adapter = Box::new(GDAdapter::new(
         dse,
         disp_handle,
         wnd_handle,
@@ -131,7 +134,7 @@ extern "C" fn accesskit_push_update(
         Some(tree_update) => tree_update,
         _ => return false,
     };
-    let adapter = unsafe { Box::from_raw(adapter_ptr as *mut Adapter) };
+    let adapter = unsafe { Box::from_raw(adapter_ptr as *mut GDAdapter) };
     adapter.update(tree_update);
     Box::into_raw(adapter);
     true
@@ -139,5 +142,5 @@ extern "C" fn accesskit_push_update(
 
 #[no_mangle]
 extern "C" fn accesskit_destroy(_dse: *mut c_void, adapter_ptr: *mut c_void) {
-    unsafe { Box::from_raw(adapter_ptr as *mut Adapter) };
+    unsafe { Box::from_raw(adapter_ptr as *mut GDAdapter) };
 }
