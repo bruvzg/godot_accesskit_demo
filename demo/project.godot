@@ -21,4 +21,5 @@ paths=["res://accesskit.gdextension"]
 
 [rendering]
 
+textures/vram_compression/import_s3tc_bptc=true
 environment/defaults/default_environment="res://default_env.tres"
