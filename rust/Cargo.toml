@@ -8,16 +8,16 @@ name = "accesskit_godot_plugin"
 crate-type = ["staticlib"]
 
 [dependencies]
-accesskit = { version = "0.10.0", features = ["serde"] }
+accesskit = { version = "0.10.1", features = ["serde"] }
 serde_json = "1.0"
 
 [target.'cfg(any(target_os = "macos"))'.dependencies]
-accesskit_macos = "0.6.0"
+accesskit_macos = "0.6.1"
 objc2 = "=0.3.0-beta.3"
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
-accesskit_windows = "0.13.0"
-windows = { version = "0.42.0", features = ["implement", "Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }
+accesskit_windows = "0.13.1"
+windows = { version = "0.44.0", features = ["implement", "Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }
 
 [target.'cfg(any(target_os = "linux"))'.dependencies]
-accesskit_unix = "0.3.0"
+accesskit_unix = "0.3.2"

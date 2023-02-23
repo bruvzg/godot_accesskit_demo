@@ -4,34 +4,43 @@
 
 [node name="Node" type="Control"]
 layout_mode = 3
-anchors_preset = 0
-offset_left = 216.0
-offset_top = 182.0
-offset_right = 216.0
-offset_bottom = 182.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_c326s")
 
 [node name="Button1" type="Button" parent="."]
 layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
+offset_left = 124.0
+offset_top = 103.0
+offset_right = 195.0
+offset_bottom = 134.0
 text = "Button1"
 
 [node name="Button2" type="Button" parent="."]
 layout_mode = 0
-offset_top = 40.0
-offset_right = 71.0
-offset_bottom = 71.0
+offset_left = 124.0
+offset_top = 143.0
+offset_right = 195.0
+offset_bottom = 174.0
 text = "Button2"
 
 [node name="Label" type="Label" parent="."]
-layout_mode = 0
-offset_left = -64.0
-offset_top = -73.0
-offset_right = 265.0
-offset_bottom = -41.0
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -459.5
+offset_top = 32.0
+offset_right = 459.5
+offset_bottom = 64.0
+grow_horizontal = 2
 text = "Test text."
+metadata/ac_live = "polite"
 
+[connection signal="resized" from="." to="." method="_on_resized"]
 [connection signal="focus_entered" from="Button1" to="." method="_on_button_1_focus_entered"]
 [connection signal="pressed" from="Button1" to="." method="_on_button_1_pressed"]
 [connection signal="focus_entered" from="Button2" to="." method="_on_button_2_focus_entered"]

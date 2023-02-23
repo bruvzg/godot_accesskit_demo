@@ -64,9 +64,8 @@ public:
 
 		void *adapter = accesskit_init(this, (void *)p_native_display_handle, (void *)p_native_window_handle, (void *)p_native_view_handle, accesskit_action, R"JSON({
 				"nodes":[
-					[1, {"role":"window","name":"Hello from Godot"}]
+					[1, {"role":"window", "name":"Godot"}]
 				],
-				"focus":1,
 				"tree":{"root":1}
 			}
 		)JSON",

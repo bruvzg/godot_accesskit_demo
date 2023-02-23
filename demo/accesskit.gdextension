@@ -11,10 +11,8 @@ windows.release.x86_64 = "res://bin/libgdaccesskit.windows.template_release.x86_
 windows.debug.arm64 = "res://bin/libgdaccesskit.windows.template_debug.arm64.dll"
 windows.release.arm64 = "res://bin/libgdaccesskit.windows.template_release.arm64.dll"
 
-macos.debug.x86_64 = "res://bin/libgdaccesskit.macos.template_debug.x86_64.dylib"
-macos.release.x86_64 = "res://bin/libgdaccesskit.macos.template_release.x86_64.dylib"
-macos.debug.arm64 = "res://bin/libgdaccesskit.macos.template_debug.arm64.dylib"
-macos.release.arm64 = "res://bin/libgdaccesskit.macos.template_release.arm64.dylib"
+macos.debug = "res://bin/libgdaccesskit.macos.template_debug.framework"
+macos.release = "res://bin/libgdaccesskit.macos.template_release.framework"
 
 linux.debug.x86.32 = "res://bin/libgdaccesskit.linux.template_debug.x86_32.so"
 linux.release.x86.32 = "res://bin/libgdaccesskit.linux.template_release.x86_32.so"
