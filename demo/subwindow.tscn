@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bvs532seet4dy"]
+
+[node name="Window" type="Window"]
+initial_position = 2
+title = "Second Window"
+size = Vector2i(250, 100)
+
+[node name="Label" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Text in the second window"
+metadata/ac_live = "assertive"

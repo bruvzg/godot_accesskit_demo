@@ -3,7 +3,7 @@ extends Control
 func _ready():
 	var iface = DisplayServerExtensionManager.find_interface("AccessKit")
 	iface.action_signal.connect(_action_handler)
-	iface.update_tree(DisplayServer.MAIN_WINDOW_ID, _make_full_tree_json(null))
+	iface.update_tree(DisplayServer.MAIN_WINDOW_ID, _make_full_tree_json(self, null))
 	$Button1.grab_focus()
 
 func _make_bounds(position, size):
@@ -24,7 +24,7 @@ func _make_node_json(node):
 
 	var cc = []
 	for c in node.get_children():
-		cc.push_back(c.get_instance_id())	
+		cc.push_back(c.get_instance_id())
 	node_info["children"] = cc
 
 	if node is Control:
@@ -56,10 +56,10 @@ func _make_tree_json(nodes, node, id):
 		node_data.push_back(_make_node_json(c))
 		_make_tree_json(nodes, c, c.get_instance_id())
 
-func _make_full_tree_json(focus_node):
+func _make_full_tree_json(root, focus_node):
 	var tree = {}
 	var nodes = []
-	_make_tree_json(nodes, self, 1)
+	_make_tree_json(nodes, root, 1)
 	tree["nodes"] = nodes
 	if focus_node:
 		tree["focus"] = focus_node.get_instance_id()
@@ -108,6 +108,10 @@ func _on_button_2_focus_entered():
 	var iface = DisplayServerExtensionManager.find_interface("AccessKit")
 	iface.update_tree(DisplayServer.MAIN_WINDOW_ID, _make_focus_json($Button2))
 
+func _on_button_3_focus_entered():
+	var iface = DisplayServerExtensionManager.find_interface("AccessKit")
+	iface.update_tree(DisplayServer.MAIN_WINDOW_ID, _make_focus_json($Button3))
+
 func _on_button_1_pressed():
 	var iface = DisplayServerExtensionManager.find_interface("AccessKit")
 	$Label.text = "Text version one."
@@ -121,3 +125,11 @@ func _on_button_2_pressed():
 func _on_resized():
 	var iface = DisplayServerExtensionManager.find_interface("AccessKit")
 	iface.update_tree(DisplayServer.MAIN_WINDOW_ID, _make_tree_update_json([self], null))
+
+func _on_button_3_pressed():
+	var iface = DisplayServerExtensionManager.find_interface("AccessKit")
+	$Window.popup_centered()
+	iface.update_tree($Window.get_window_id(), _make_full_tree_json($Window, $Window/Label))
+
+func _on_window_close_requested():
+	$Window.hide()

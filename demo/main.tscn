@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dmx2xuigcpvt4"]
+[gd_scene load_steps=3 format=3 uid="uid://dmx2xuigcpvt4"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_c326s"]
+[ext_resource type="PackedScene" uid="uid://bvs532seet4dy" path="res://subwindow.tscn" id="2_dmox6"]
 
 [node name="Node" type="Control"]
 layout_mode = 3
@@ -14,34 +15,44 @@ script = ExtResource("1_c326s")
 [node name="Button1" type="Button" parent="."]
 layout_mode = 0
 offset_left = 124.0
-offset_top = 103.0
+offset_top = 239.0
 offset_right = 195.0
-offset_bottom = 134.0
+offset_bottom = 270.0
 text = "Button1"
 
 [node name="Button2" type="Button" parent="."]
 layout_mode = 0
 offset_left = 124.0
-offset_top = 143.0
+offset_top = 279.0
 offset_right = 195.0
-offset_bottom = 174.0
+offset_bottom = 310.0
 text = "Button2"
+
+[node name="Button3" type="Button" parent="."]
+layout_mode = 0
+offset_left = 124.0
+offset_top = 319.0
+offset_right = 241.0
+offset_bottom = 350.0
+text = "Show Window"
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -459.5
-offset_top = 32.0
-offset_right = 459.5
-offset_bottom = 64.0
-grow_horizontal = 2
+offset_left = 128.0
+offset_top = 136.0
+offset_right = 1047.0
+offset_bottom = 215.0
 text = "Test text."
 metadata/ac_live = "polite"
+
+[node name="Window" parent="." instance=ExtResource("2_dmox6")]
+visible = false
 
 [connection signal="resized" from="." to="." method="_on_resized"]
 [connection signal="focus_entered" from="Button1" to="." method="_on_button_1_focus_entered"]
 [connection signal="pressed" from="Button1" to="." method="_on_button_1_pressed"]
 [connection signal="focus_entered" from="Button2" to="." method="_on_button_2_focus_entered"]
 [connection signal="pressed" from="Button2" to="." method="_on_button_2_pressed"]
+[connection signal="focus_entered" from="Button3" to="." method="_on_button_3_focus_entered"]
+[connection signal="pressed" from="Button3" to="." method="_on_button_3_pressed"]
+[connection signal="close_requested" from="Window" to="." method="_on_window_close_requested"]
