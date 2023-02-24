@@ -16,7 +16,7 @@ accesskit_macos = "0.6.1"
 objc2 = "=0.3.0-beta.3"
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
-accesskit_windows = "0.13.1"
+accesskit_windows = "0.13.2"
 windows = { version = "0.44.0", features = ["implement", "Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }
 
 [target.'cfg(any(target_os = "linux"))'.dependencies]
